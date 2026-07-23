@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>深海 CDN - 中文网字计划</title>
+    <link
+        rel="stylesheet"
+        href="./packages/cef/dist/CEFFontsCJK-Regular/result.css"
+    />
+    <style>
+        /* Apple 极简与高对比色彩系统 */
+        :root {
+            --bg-main: #ffffff;
+            --card-bg: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #6e6e73;
+            --text-tertiary: #86868b;
+            --border-subtle: #f2f2f7;
+            --border-card: #e5e5ea;
+            --preview-bg: #fafafa;
+            --accent-blue: #0066cc;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 5rem 1.25rem 6rem;
+        }
+
+        header {
+            margin-bottom: 3.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 2.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--accent-blue);
+            margin-bottom: 0.75rem;
+        }
+
+        h1 {
+            font-family: 'CEF Fonts CJK', -apple-system, sans-serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            line-height: 1.15;
+            letter-spacing: -0.025em;
+            color: var(--text-primary);
+            margin: 0 0 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            line-height: 1.45;
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+
+        #index-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        #index-list li {
+            background: var(--card-bg);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        #index-list li:hover {
+            border-color: #d1d1d6;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            transform: translateY(-1px);
+        }
+
+        #index-list a {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            padding: 1.25rem;
+            gap: 0.85rem;
+        }
+
+        .card-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .meta-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .font-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+            color: var(--text-primary);
+        }
+
+        .font-variant {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: var(--border-subtle);
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            font-weight: 500;
+            letter-spacing: -0.005em;
+        }
+
+        .font-path {
+            font-size: 0.75rem;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            color: var(--text-tertiary);
+            word-break: break-all;
+        }
+
+        .preview-wrap {
+            background-color: var(--preview-bg);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            width: 100%;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .preview-wrap img {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 3rem 1rem 4rem;
+            }
+            h1 {
+                font-size: 1.85rem;
+            }
+            #index-list a {
+                padding: 1rem;
+            }
+            .preview-wrap {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <span class="badge">深海字体服务</span>
+        <h1>深海 CDN</h1>
+        <p class="subtitle">基于中文网字计划网站改编</p>
+    </header>
+
+    <main>
+        <ol id="index-list"></ol>
+    </main>
+</div>
+
+<script>
+(async () => {
+    const res = await fetch("./index.json").then(r => r.json());
+    const listEl = document.getElementById("index-list");
+
+    /* ---------- 1. 扁平化所有字体变体 ---------- */
+    const allItems = [];
+    Object.entries(res).forEach(([family, meta]) => {
+        meta.remotePath.forEach(({ path, css }) => {
+            const weightLabel =
+                css.weight && css.weight !== "400"
+                    ? `字重 ${css.weight}`
+                    : "";
+            const styleLabel =
+                css.style && css.style !== "normal"
+                    ? css.style === "italic"
+                        ? "斜体"
+                        : css.style
+                    : "";
+            const variantLabel = [styleLabel, weightLabel]
+                .filter(Boolean)
+                .join(" · ");
+
+            allItems.push({
+                family,
+                name: meta.name,
+                path,
+                variantLabel,
+                previewSrc: path.replace(/result\.css$/, "preview.svg"),
+            });
+        });
+    });
+
+    /* ---------- 2. 搜索 & 分页状态 ---------- */
+    let currentPage = 1;
+    const pageSize = 50;
+    let filteredItems = allItems;
+
+    /* ---------- 3. 渲染列表 ---------- */
+    function render() {
+        listEl.innerHTML = "";
+
+        const start = (currentPage - 1) * pageSize;
+        const pageItems = filteredItems.slice(start, start + pageSize);
+
+        if (pageItems.length === 0) {
+            listEl.innerHTML = `<li style="padding:2rem;text-align:center;color:var(--text-secondary)">无匹配结果</li>`;
+            renderPagination();
+            return;
+        }
+
+        pageItems.forEach(item => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <a href="./${item.path}">
+                    <div class="card-meta">
+                        <div class="meta-header">
+                            <span class="font-name">${item.name}</span>
+                            ${item.variantLabel ? `<span class="font-variant">${item.variantLabel}</span>` : ""}
+                        </div>
+                        <div class="font-path">${item.path}</div>
+                    </div>
+                    <div class="preview-wrap">
+                        <img
+                            src="./${item.previewSrc}"
+                            alt="${item.name} 字体预览"
+                            loading="lazy"
+                            onerror="this.parentElement.style.display='none'"
+                        />
+                    </div>
+                </a>
+            `;
+            listEl.appendChild(li);
+        });
+
+        renderPagination();
+    }
+
+    /* ---------- 4. 分页栏 ---------- */
+    function renderPagination() {
+        let nav = document.getElementById("pagination");
+        if (!nav) {
+            nav = document.createElement("nav");
+            nav.id = "pagination";
+            nav.style.cssText = `
+                display:flex;
+                justify-content:center;
+                gap:0.5rem;
+                margin-top:2rem;
+                flex-wrap:wrap;
+            `;
+            listEl.after(nav);
+        }
+        nav.innerHTML = "";
+
+        const totalPages = Math.ceil(filteredItems.length / pageSize);
+        if (totalPages <= 1) return;
+
+        const makeBtn = (label, page, disabled = false, current = false) => {
+            const btn = document.createElement("button");
+            btn.textContent = label;
+            btn.disabled = disabled;
+            btn.style.cssText = `
+                font:inherit;
+                font-size:0.8rem;
+                padding:0.45rem 0.75rem;
+                border-radius:8px;
+                border:1px solid var(--border-card);
+                background:${current ? "#000" : "#fff"};
+                color:${current ? "#fff" : "#000"};
+                cursor:${disabled ? "default" : "pointer"};
+                opacity:${disabled ? 0.4 : 1};
+            `;
+            btn.onclick = () => {
+                currentPage = page;
+                render();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            };
+            nav.appendChild(btn);
+        };
+
+        makeBtn("上一页", currentPage - 1, currentPage === 1);
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (
+                i === 1 ||
+                i === totalPages ||
+                Math.abs(i - currentPage) <= 2
+            ) {
+                makeBtn(i, i, false, i === currentPage);
+            } else if (
+                i === currentPage - 3 ||
+                i === currentPage + 3
+            ) {
+                const dot = document.createElement("span");
+                dot.textContent = "…";
+                dot.style.cssText = "padding:0.45rem;color:var(--text-tertiary)";
+                nav.appendChild(dot);
+            }
+        }
+
+        makeBtn("下一页", currentPage + 1, currentPage === totalPages);
+    }
+
+    /* ---------- 5. 搜索框（插入到 header） ---------- */
+    const header = document.querySelector("header");
+    const search = document.createElement("input");
+    search.placeholder = "搜索字体名称或路径";
+    search.style.cssText = `
+        margin-top:1rem;
+        width:100%;
+        padding:0.65rem 0.9rem;
+        border-radius:10px;
+        border:1px solid var(--border-card);
+        font:inherit;
+        font-size:0.9rem;
+        background:var(--preview-bg);
+        outline:none;
+    `;
+    header.appendChild(search);
+
+    search.addEventListener("input", () => {
+        const kw = search.value.trim().toLowerCase();
+        filteredItems = allItems.filter(
+            i =>
+                i.name.toLowerCase().includes(kw) ||
+                i.family.toLowerCase().includes(kw) ||
+                i.path.toLowerCase().includes(kw)
+        );
+        currentPage = 1;
+        render();
+    });
+
+    /* ---------- 6. 首屏渲染 ---------- */
+    render();
+})();
+</script>
+</body>
+</html>

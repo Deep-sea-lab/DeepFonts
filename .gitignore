@@ -1,0 +1,9 @@
+node_modules
+dist
+packages/test
+.env
+.npmrc
+# Local Netlify folder
+.netlify
+.DS_Store
+target
