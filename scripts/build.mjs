@@ -3,8 +3,8 @@ import md5 from "md5";
 import path from "path";
 import semver from "semver";
 import mri from "mri";
-import { fontSplit } from "cn-font-split";
 import { openSync } from "fontkit";
+import { spawn } from "child_process";
 
 const argv = process.argv.slice(2);
 const input = mri(argv);
@@ -103,73 +103,45 @@ for (const iterator of packages) {
 
         const previewText = buildPreviewText(fontPath);
 
-        // ✅ 唯一修改点：try/catch 包裹 fontSplit
-        try {
-            await fontSplit({
-                input: fontPath,
-                outDir: dest,
-                previewImage: {
-                    text: previewText,
-                    name: "preview",
-                },
+        // ✅ 唯一核心改动：用子进程隔离 fontSplit
+        await new Promise((resolve) => {
+            const child = spawn(
+                process.execPath,
+                [
+                    "./scripts/split-one.mjs",
+                    fontPath,
+                    dest,
+                    previewText,
+                ],
+                { stdio: "inherit" }
+            );
+
+            child.on("exit", (code) => {
+                if (code !== 0) {
+                    console.error(`❌ 字体打包失败，跳过: ${iterator} (${name})`);
+                    fse.appendFileSync(
+                        "./failed-fonts.log",
+                        `${iterator}: ${name}\n`
+                    );
+                    try {
+                        fse.removeSync(dest);
+                    } catch (_) {}
+                }
+                resolve();
             });
-        } catch (err) {
-            console.error(`❌ 字体打包失败，跳过: ${iterator} (${name})`);
-            console.error(err && err.message ? err.message : err);
 
-            // 记录坏字体
-            fse.appendFileSync(
-                "./failed-fonts.log",
-                `${iterator}: ${name}\n`
-            );
-
-            // 清理半成品目录
-            try {
-                fse.removeSync(dest);
-            } catch (_) {}
-
-            continue;
-        }
-
-        const svgPath = path.join(dest, "preview.svg");
-        try {
-            let svg = fse.readFileSync(svgPath, "utf-8");
-            const vbMatch = svg.match(
-                /viewBox="([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)"/
-            );
-            if (vbMatch) {
-                const [, vx, vy, vw, vh] = vbMatch.map(Number);
-                const re =
-                    /transform="translate\(([\d.-]+)\s+([\d.-]+)\)"[^>]*d="([^"]+)"/g;
-                let allGlobalY = [];
-                let match;
-                while ((match = re.exec(svg)) !== null) {
-                    const ty = parseFloat(match[2]);
-                    const d = match[3];
-                    const nums = d.match(/[\d.-]+/g);
-                    if (!nums) continue;
-                    for (let i = 1; i < nums.length; i += 2) {
-                        allGlobalY.push(ty + parseFloat(nums[i]));
-                    }
-                }
-
-                if (allGlobalY.length > 0) {
-                    const realMinY = Math.min(...allGlobalY);
-                    const realMaxY = Math.max(...allGlobalY);
-                    if (realMinY < vy || realMaxY > vy + vh) {
-                        const newY = Math.min(vy, realMinY - 5);
-                        const newH = Math.max(vy + vh, realMaxY + 5) - newY;
-                        svg = svg.replace(
-                            /viewBox="([\d.-]+\s+)([\d.-]+)(\s+[\d.-]+\s+)([\d.-]+)"/,
-                            `viewBox="${vx} ${newY} ${vw} ${newH}"`
-                        );
-                        fse.writeFileSync(svgPath, svg, "utf-8");
-                    }
-                }
-            }
-        } catch (e) {
-            console.error(`  处理 preview.svg 失败: ${e.message}`);
-        }
+            child.on("error", () => {
+                console.error(`❌ 字体进程启动失败，跳过: ${iterator} (${name})`);
+                fse.appendFileSync(
+                    "./failed-fonts.log",
+                    `${iterator}: ${name}\n`
+                );
+                try {
+                    fse.removeSync(dest);
+                } catch (_) {}
+                resolve();
+            });
+        });
     }
 
     console.log(`${iterator} 打包完成`);
