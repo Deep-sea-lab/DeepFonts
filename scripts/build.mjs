@@ -103,14 +103,33 @@ for (const iterator of packages) {
 
         const previewText = buildPreviewText(fontPath);
 
-        await fontSplit({
-            input: fontPath,
-            outDir: dest,
-            previewImage: {
-                text: previewText,
-                name: "preview",
-            },
-        });
+        // ✅ 唯一修改点：try/catch 包裹 fontSplit
+        try {
+            await fontSplit({
+                input: fontPath,
+                outDir: dest,
+                previewImage: {
+                    text: previewText,
+                    name: "preview",
+                },
+            });
+        } catch (err) {
+            console.error(`❌ 字体打包失败，跳过: ${iterator} (${name})`);
+            console.error(err && err.message ? err.message : err);
+
+            // 记录坏字体
+            fse.appendFileSync(
+                "./failed-fonts.log",
+                `${iterator}: ${name}\n`
+            );
+
+            // 清理半成品目录
+            try {
+                fse.removeSync(dest);
+            } catch (_) {}
+
+            continue;
+        }
 
         const svgPath = path.join(dest, "preview.svg");
         try {
