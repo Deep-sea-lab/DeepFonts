@@ -36,7 +36,7 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm run build:cdn
+        run: pnpm run build:cdn -- --single=boldace-brush
 
       - name: Deploy to netlify branch
         uses: peaceiris/actions-gh-pages@v4
