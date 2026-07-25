@@ -1,4 +1,4 @@
-name: Build and Deploy to netlify Branch
+name: Build and Deploy to Netlify
 
 on:
   push:
@@ -35,18 +35,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: 妖魔鬼怪快离开
-        run: |
-          cat -A overrides.json | grep cjk
-          node -e 'console.log(Object.keys(require("./overrides.json")).filter(k => k.includes("cjk")))'
-
       - name: Build
         run: pnpm run build:cdn
 
-      - name: Deploy to netlify branch
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Deploy to Netlify
+        uses: jsmrcaga/action-netlify-deploy@v2.2.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          clean: true
-          publish_branch: netlify
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_DEPLOY_TO_PROD: true
+          build_directory: ./dist
+          NETLIFY_DEPLOY_MESSAGE: "Deploy: ${{ github.event.head_commit.message }}"
