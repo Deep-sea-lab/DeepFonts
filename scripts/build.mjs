@@ -183,4 +183,8 @@ for (const iterator of packages) {
     );
 }
 
+if (fse.existsSync("./failed-fonts.log")) {
+    console.log(fse.readFileSync("./failed-fonts.log", "utf-8"));
+}
+
 setImmediate(() => process.exit(0));
