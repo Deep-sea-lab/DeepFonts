@@ -6,7 +6,7 @@ const cn = await fs.readJSON("./overrides.json");
 const data = Object.fromEntries(
     Object.entries(cn).map(([en, cn]) => {
         const path = globSync(`packages/${en}/fonts/*`).map((i) => {
-            const nation = i.replaceAll("\\", "/").replace("fonts", "dist");
+            const nation = i.replaceAll("\\", "/").replace(/\/fonts\//, "/dist/");
             const extName = p.extname(nation); // 获取文件后缀名，包含点号
             const basePath =
                 p.dirname(nation) +
