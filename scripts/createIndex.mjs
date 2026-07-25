@@ -36,9 +36,7 @@ const data = Object.fromEntries(
 );
 
     await fs.outputJSON("./index.json", data);
+    console.log(data);
     console.log("done");
-    process.exit(0);
-console.log(data);
-fs.outputJSON("./index.json", data);
 
 setImmediate(() => process.exit(0));
